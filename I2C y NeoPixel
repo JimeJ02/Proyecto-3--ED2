@@ -1,0 +1,31 @@
+//////////////////////////////////////////////////////////
+Electronica Digital 2
+Proyecto 2 - SPI,TFT y SD
+Jimena Juárez 21589
+//////////////////////////////////////////////////////////
+
+ESP32
+#include <Arduino.h>
+#include <Wire.h>              //librería para comunicación I2C
+#include <Adafruit_NeoPixel.h> //librería para neopixel
+#include <Adafruit_MPU6050.h>  //librería sensor
+#include <Adafruit_Sensor.h>   //librería sensor
+
+String aceler
+
+int dato;
+Adafruit_MPU6050 mpu;
+
+#define NUMPIXELS 16 // numero de pixeles
+#define LEDS 23      // pin de neopixeles
+
+#define SDA_PIN 21 //pines sensor
+#define SCL_PIN 22
+
+// Inicia NeoPixels **********************************************
+Adafruit_NeoPixel pixels(NUMPIXELS, LEDS, NEO_GRB);
+
+void on();
+void measure();
+void saved();
+void error();
