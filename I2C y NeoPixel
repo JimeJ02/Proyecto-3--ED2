@@ -366,6 +366,16 @@ void guardarEnTarjetaSD(int acelera) {
   }
 }
 
+void sonic() { //sprite de sonico corriendo para simular el acelerometro
+  for (int x = 0; x < 320 - 32; x++) { //sprite sonic corriendo
+    delay(15);
+    int anim2 = (x / 50) % 6;
+    LCD_Sprite(x, 75, 150, 40, sonic, 6, anim2, 0, 1);
+    delay(500);
+  }
+//no funcionó en físico
+}
+
 //*********************************************
 // Función para inicializar LCD
 //*********************************************
