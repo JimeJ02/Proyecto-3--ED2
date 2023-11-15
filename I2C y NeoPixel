@@ -4,28 +4,181 @@ Proyecto 2 - SPI,TFT y SD
 Jimena Juárez 21589
 //////////////////////////////////////////////////////////
 
+/*************************************************************************************************************
 ESP32
+*************************************************************************************************************/
+
+//Inclusión de las librerias para el NeoPixel y el sensor
 #include <Arduino.h>
-#include <Wire.h>              //librería para comunicación I2C
-#include <Adafruit_NeoPixel.h> //librería para neopixel
-#include <Adafruit_MPU6050.h>  //librería sensor
-#include <Adafruit_Sensor.h>   //librería sensor
+#include <Wire.h>              
+#include <Adafruit_NeoPixel.h> 
+#include <Adafruit_MPU6050.h>  
+#include <Adafruit_Sensor.h>   
 
-String aceler
+//definición del pin del neopixel
+#define NUMPIXELS 16 
+#define LEDS 23 
 
-int dato;
-Adafruit_MPU6050 mpu;
-
-#define NUMPIXELS 16 // numero de pixeles
-#define LEDS 23      // pin de neopixeles
-
-#define SDA_PIN 21 //pines sensor
+//definición de pines para el sensor
+#define SDA_PIN 21 
 #define SCL_PIN 22
 
-// Inicia NeoPixels **********************************************
-Adafruit_NeoPixel pixels(NUMPIXELS, LEDS, NEO_GRB);
-
+//definición de variables
+String bufferTiva;
 void on();
 void measure();
 void saved();
-void error();
+
+Adafruit_MPU6050 mpu;
+
+//Inicialización de las leds neopixel
+Adafruit_NeoPixel pixels(NUMPIXELS, LEDS, NEO_GRB);
+
+
+void setup()
+{
+  //inicio de ambos microcontroladores
+  Serial.begin(115200);
+  Serial2.begin(115200);
+
+  pixels.begin(); //inicio del neopixel
+  pixels.clear();
+  pixels.setBrightness(130); //brillo de las luces
+
+  pixels.setPixelColor(0, pixels.Color(255, 192, 203)); // pone los leds en rosado
+  pixels.show();
+
+  while (!Serial);
+  Serial.print("Conectando...");
+
+  // Sensro MPU6050
+  Serial.println("Iniciando sensor...");
+
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G); //rango acelerometro
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+  mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
+  mpu.setMotionDetectionThreshold(1);
+  mpu.setMotionDetectionDuration(20);
+  mpu.setInterruptPinLatch(true); 
+  mpu.setInterruptPinPolarity(true);
+  mpu.setMotionInterrupt(true);
+
+  delay(100);
+}
+
+void loop()
+{
+  sensors_event_t a, g, acelera;
+  mpu.getEvent(&a, &g, &acelera);
+  Serial2.println("Comunicación con el ESP32"); //verificar la conexión con el ESP32
+
+  if (Serial2.available() > 0)
+  {
+    bufferTiva = Serial2.readStringUntil('\n');
+    bufferTiva.trim(); 
+
+    if (bufferTiva == "m")
+    {
+      Serial.println("Midiendo..."); //medicion de los valores del sensor
+      String dataToSend = String(a.acceleration.x) + " ; " + String(a.acceleration.y) + " ; " + String(a.acceleration.z);
+      Serial2.print(dataToSend); //envio de la información
+
+      Serial.println("Send:");
+      Serial.print("Aceleracion en x ; y ; z");
+      Serial.print(a.acceleration.x);
+      Serial.print(" ; ");
+      Serial.println(a.acceleration.y);
+      Serial.print(" ; ");
+      Serial.println(a.acceleration.z);
+      Serial.println("--------------------------------------------");
+
+      bufferTiva = "";
+
+      measure(); // Neopixel
+      delay(500);
+    }
+    else if (bufferTiva == "d")
+    {
+      saved(); // Neopixel
+      delay(300);
+    }
+    else if (bufferTiva == "on")
+    {
+      on(); // Neopixel
+      delay(500);
+    }
+
+  delay(3000);
+}
+
+void on() //muestreo de luces al estar comenzando
+{
+  for (int j = 0; j < 3; j++) //luces intermitentes
+  {
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+      pixels.setPixelColor(i, pixels.Color(235, 130, 150)); //encender de color rosado
+    }
+    pixels.show();
+    delay(500);
+    pixels.clear();
+    pixels.show();
+    delay(500);
+  }
+}
+
+void measure() //muestreo de luces al estar realizando la medición
+{
+  for (int j = 0; j < 3; j++) //luces intermitentes
+  {
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+      pixels.setPixelColor(i, pixels.Color(237, 231, 41)); //encender de color amarillo/blanco
+      pixels.show();
+      delay(100);
+      pixels.clear();
+      pixels.show();
+    }
+  }
+}
+
+void saved() //muestreo de luces al almacenar el dato
+{
+  for (int j = 0; j < 3; j++)
+  {
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+      pixels.setPixelColor(i, pixels.Color(41, 237, 85)); // encender de color aqua
+    }
+    pixels.show();
+    delay(500);
+    pixels.clear();
+    pixels.show();
+    delay(500);
+  }
+}
+
+//no se mostro en el color a la hora de almacenar
+
+void error() // luces que muestra que se obtuvo un error
+{
+  for (int j = 0; j < 3; j++)
+  {
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+      pixels.setPixelColor(i, pixels.Color(255, 0, 0)); // Rojo
+    }
+    pixels.show();
+    delay(500);
+    pixels.clear();
+    pixels.show();
+    delay(500);
+  }
+}
+
+/*************************************************************************************************************
+Tiva C
+*************************************************************************************************************/
+
+
